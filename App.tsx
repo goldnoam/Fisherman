@@ -3,7 +3,6 @@ import { GameScene } from './components/GameScene';
 import { UI } from './components/UI';
 import { GameState, FishConfig, PlayerStats, FishType, ShopItem, WeatherType, HighScoreEntry } from './types';
 import { LEVEL_DURATION, SPAWN_RATES, FISH_SPECS, FISH_COLORS } from './constants';
-import { v4 as uuidv4 } from 'uuid'; 
 
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
@@ -185,11 +184,7 @@ export default function App() {
           return { ...prev, money: newMoney };
       });
       setLastExpenses(expenses);
-  }, [stats.level, highScores]); // Dependency on highScores to check correctly? actually checkHighScore uses state, might be stale inside callback?
-  // Refactoring checkHighScore to avoid closure staleness issues if called directly.
-  // Actually, we can just defer the check to an effect or call it with the most recent list.
-  // For simplicity, we'll let the state update trigger logic or pass current highScores ref if needed.
-  // Ideally, use a useEffect on GameState.GAME_OVER
+  }, [stats.level, highScores]); 
 
   useEffect(() => {
       if (gameState === GameState.GAME_OVER) {

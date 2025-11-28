@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Sky, Cloud, Float, Sparkles, SpotLight } from '@react-three/drei';
+import { Sky, Cloud, Float, Sparkles, SpotLight, MeshDistortMaterial } from '@react-three/drei';
 import * as THREE from 'three';
 import { FishConfig, GameState, PlayerStats, FishType, WeatherType } from '../types';
 import { playGameSound } from '../constants';
@@ -79,15 +79,28 @@ const Boat = ({ positionRef, reelSpeed, outfit }: { positionRef: React.MutableRe
             attenuation={5}
             anglePower={4}
           />
-          {/* Light Fixture Visuals */}
-          <mesh position={[0.8, 0, 0]}>
-             <sphereGeometry args={[0.15]} />
-             <meshStandardMaterial color="#fff" emissive="#fff" emissiveIntensity={1} />
-          </mesh>
-          <mesh position={[-0.8, 0, 0]}>
-             <sphereGeometry args={[0.15]} />
-             <meshStandardMaterial color="#fff" emissive="#fff" emissiveIntensity={1} />
-          </mesh>
+          
+          {/* Physical Lantern Models */}
+          <group position={[0.8, 0, 0]}>
+             <mesh position={[0, 0, 0.1]} rotation={[Math.PI/2, 0, 0]}>
+                 <cylinderGeometry args={[0.2, 0.15, 0.3]} />
+                 <meshStandardMaterial color="#333" />
+             </mesh>
+             <mesh position={[0, 0, 0.26]}>
+                 <sphereGeometry args={[0.15]} />
+                 <meshBasicMaterial color="#fffee0" />
+             </mesh>
+          </group>
+          <group position={[-0.8, 0, 0]}>
+             <mesh position={[0, 0, 0.1]} rotation={[Math.PI/2, 0, 0]}>
+                 <cylinderGeometry args={[0.2, 0.15, 0.3]} />
+                 <meshStandardMaterial color="#333" />
+             </mesh>
+             <mesh position={[0, 0, 0.26]}>
+                 <sphereGeometry args={[0.15]} />
+                 <meshBasicMaterial color="#fffee0" />
+             </mesh>
+          </group>
       </group>
 
       {/* Hull */}
@@ -267,15 +280,27 @@ const WeatherEffects = ({ weather }: { weather: WeatherType }) => {
     }, []);
     
     const rainRef = useRef<THREE.Points>(null);
+    const [flash, setFlash] = useState(0);
 
-    useFrame((_, delta) => {
+    useFrame((state, delta) => {
+        // Rain Animation
         if (weather === 'RAINY' && rainRef.current) {
             const positions = rainRef.current.geometry.attributes.position.array as Float32Array;
             for(let i=1; i<positions.length; i+=3) {
-                positions[i] -= 10 * delta;
+                positions[i] -= 15 * delta;
                 if (positions[i] < -5) positions[i] = 20;
             }
             rainRef.current.geometry.attributes.position.needsUpdate = true;
+            
+            // Lightning Logic
+            if (Math.random() < 0.005) { // 0.5% chance per frame
+                setFlash(1);
+                playGameSound('thunder', 1);
+            }
+        }
+        
+        if (flash > 0) {
+            setFlash(f => Math.max(0, f - delta * 3)); // Fade out lightning
         }
     });
 
@@ -286,8 +311,8 @@ const WeatherEffects = ({ weather }: { weather: WeatherType }) => {
                     <points ref={rainRef} geometry={rainGeo}>
                         <pointsMaterial color="#aaa" size={0.1} transparent opacity={0.6} />
                     </points>
-                    <Cloud position={[0, 10, 0]} opacity={0.8} speed={0.4} width={20} depth={5} segments={20} />
-                    <ambientLight intensity={0.2} />
+                    <Cloud position={[0, 10, 0]} opacity={0.8} speed={0.4} width={20} depth={5} segments={20} color="#334155" />
+                    <ambientLight intensity={0.2 + flash} color={flash > 0 ? "#a5f3fc" : "#fff"} />
                 </>
             )}
             {weather === 'FOGGY' && (
@@ -1026,9 +1051,17 @@ export const GameScene = ({ gameState, fishes, setFishes, onCatch, inventory, we
 
       <pointLight position={[10, 10, 10]} intensity={weather === 'RAINY' ? 0.5 : 1} castShadow />
       
+      {/* Dynamic Wavy Water */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2, 0]} receiveShadow>
-        <planeGeometry args={[100, 100]} />
-        <meshStandardMaterial color="#0ea5e9" transparent opacity={0.8} />
+        <planeGeometry args={[100, 100, 20, 20]} />
+        <MeshDistortMaterial 
+          color="#0ea5e9" 
+          transparent 
+          opacity={0.8} 
+          distort={0.4} 
+          speed={2} 
+          roughness={0.2} 
+        />
       </mesh>
       
       {/* Dynamic Water Ripples */}

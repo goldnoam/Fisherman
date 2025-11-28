@@ -51,18 +51,21 @@ export const SHOP_ITEMS: ShopItem[] = [
   { id: 'reel_2', name: 'Turbo Reel v2', description: 'Supercharged engine for heavy fish.', cost: 800, type: 'speed', value: 0.5 },
   { id: 'reel_3', name: 'Nuclear Reel', description: 'Hyper-speed hauling power.', cost: 2500, type: 'speed', value: 0.9 },
   { id: 'reel_4', name: 'Quantum Reel', description: 'Bends spacetime to fish.', cost: 6000, type: 'speed', value: 1.5 },
+  { id: 'reel_5', name: 'Warp Drive', description: 'Instant retrieval tech.', cost: 12000, type: 'speed', value: 2.5 },
   
   // Hook Upgrades
   { id: 'hook_1', name: 'Titanium Hook', description: 'Larger hook hitbox for easier catches.', cost: 500, type: 'size', value: 0.5 },
   { id: 'hook_2', name: 'Magnet Hook', description: 'Even bigger catch radius.', cost: 1200, type: 'size', value: 1.0 },
   { id: 'hook_3', name: 'Magnet Hook XL', description: 'Serious attraction power.', cost: 2500, type: 'size', value: 1.5 },
   { id: 'hook_4', name: 'Black Hole', description: 'Massive gravitational pull.', cost: 5000, type: 'size', value: 2.5 },
+  { id: 'hook_5', name: 'Poseidon\'s Fork', description: 'The god of seas favors you.', cost: 15000, type: 'size', value: 4.0 },
 
   // Luck Upgrades
   { id: 'luck_1', name: 'Shiny Lure', description: 'Attracts more rare fish.', cost: 1000, type: 'luck', value: 1 },
   { id: 'luck_2', name: 'Diamond Lure', description: 'Significantly boosts rare spawns.', cost: 2500, type: 'luck', value: 2.5 },
   { id: 'luck_3', name: 'Sonar', description: 'Tech that locates legendary fish.', cost: 4000, type: 'luck', value: 3.5 },
   { id: 'luck_4', name: 'Ancient Totem', description: 'Legendary fish flock to you.', cost: 8000, type: 'luck', value: 6 },
+  { id: 'luck_5', name: 'Kraken Bait', description: 'Dangerously lucky.', cost: 20000, type: 'luck', value: 10 },
 
   // Cosmetics
   { id: 'shoes_1', name: 'Water Boots', description: 'Look cool on the dock.', cost: 200, type: 'cosmetic', value: 0 },
@@ -89,7 +92,7 @@ const initAudio = () => {
     }
 };
 
-export const playGameSound = (type: 'ui' | 'cast' | 'splash' | 'reel' | 'success', intensity: number = 1.0) => {
+export const playGameSound = (type: 'ui' | 'cast' | 'splash' | 'reel' | 'success' | 'thunder', intensity: number = 1.0) => {
     try {
         initAudio();
         if (!audioCtx) return;
@@ -124,7 +127,7 @@ export const playGameSound = (type: 'ui' | 'cast' | 'splash' | 'reel' | 'success
                 osc.stop(now + 0.3);
                 break;
             case 'splash':
-                // White noise burst approximation using erratic frequency
+                // White noise burst approximation
                 osc.type = 'sawtooth';
                 osc.frequency.setValueAtTime(100, now);
                 osc.frequency.linearRampToValueAtTime(20, now + 0.2);
@@ -156,6 +159,16 @@ export const playGameSound = (type: 'ui' | 'cast' | 'splash' | 'reel' | 'success
                 gainNode.gain.linearRampToValueAtTime(0, now + 0.4);
                 osc.start(now);
                 osc.stop(now + 0.4);
+                break;
+            case 'thunder':
+                // Low rumble
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(80, now);
+                osc.frequency.exponentialRampToValueAtTime(10, now + 1.5);
+                gainNode.gain.setValueAtTime(0.5, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 1.5);
+                osc.start(now);
+                osc.stop(now + 1.5);
                 break;
         }
 
